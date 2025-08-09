@@ -1,8 +1,17 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Bot, Settings, MoreVertical } from 'lucide-react';
+import { ConnectionStatus } from './ConnectionStatus';
 
-export const ChatHeader: React.FC = () => {
+interface ChatHeaderProps {
+  isConnected?: boolean;
+  isLoading?: boolean;
+}
+
+export const ChatHeader: React.FC<ChatHeaderProps> = ({ 
+  isConnected = true, 
+  isLoading = false 
+}) => {
   return (
     <motion.header
       initial={{ y: -50, opacity: 0 }}
@@ -21,14 +30,7 @@ export const ChatHeader: React.FC = () => {
         
         <div>
           <h1 className="text-lg font-semibold text-gray-900">AI助手</h1>
-          <div className="flex items-center gap-2">
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-              className="w-2 h-2 bg-green-500 rounded-full"
-            />
-            <span className="text-sm text-green-600 font-medium">在线</span>
-          </div>
+          <ConnectionStatus isConnected={isConnected} isLoading={isLoading} />
         </div>
       </div>
 

@@ -5,30 +5,69 @@ import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
 import { ChatHeader } from './ChatHeader';
 import { LoadingIndicator } from './LoadingIndicator';
-import { getRandomAIResponse, simulateAIDelay } from '../utils/aiResponses';
+import { chatService, convertToFrontendMessage, handleChatError } from '../services/chatService';
 
 export const ChatContainer: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: '您好！我是您的AI助手。我可以帮助您解答问题、提供建议或者进行愉快的对话。请问有什么我可以为您做的吗？',
-      sender: 'ai',
-      timestamp: new Date(),
-      isTyping: true
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // 初始化组件时测试连接并显示欢迎消息
+  useEffect(() => {
+    const initializeChat = async () => {
+      try {
+        setIsLoading(true);
+        
+        // 测试连接
+        const helloMessage = await chatService.testConnection();
+        
+        // 显示初始欢迎消息
+        const welcomeMessage: Message = {
+          id: '1',
+          text: '您好！我是您的AI助手。我可以帮助您解答问题、提供建议或者进行愉快的对话。请问有什么我可以为您做的吗？',
+          sender: 'ai',
+          timestamp: new Date(),
+          isTyping: true
+        };
+
+        setMessages([welcomeMessage]);
+        setIsInitialized(true);
+        
+        console.log('AI 服务连接成功:', helloMessage);
+      } catch (error) {
+        console.error('初始化聊天失败:', error);
+        
+        const errorMessage: Message = {
+          id: '1',
+          text: '抱歉，AI 服务暂时无法连接。请检查网络连接或稍后再试。',
+          sender: 'ai',
+          timestamp: new Date()
+        };
+
+        setMessages([errorMessage]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeChat();
+  }, []);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
   const handleSendMessage = async (text: string) => {
+    if (!isInitialized) {
+      console.warn('聊天服务尚未初始化');
+      return;
+    }
+
     // 添加用户消息
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -41,25 +80,32 @@ export const ChatContainer: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // 模拟AI思考延迟
-      await simulateAIDelay();
+      // 调用真实的 AI 服务
+      const response = await chatService.sendMessage(text);
 
-      // 生成AI回复
-      const aiResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: getRandomAIResponse(),
-        sender: 'ai',
-        timestamp: new Date(),
-        isTyping: true
-      };
+      if (response.success && response.message) {
+        // 转换并添加 AI 回复
+        const aiMessage = convertToFrontendMessage(response.message);
+        aiMessage.isTyping = true; // 添加打字动画效果
+        
+        setMessages(prev => [...prev, aiMessage]);
+      } else {
+        // 处理 AI 服务返回的错误
+        const errorMessage: Message = {
+          id: (Date.now() + 1).toString(),
+          text: response.error || '抱歉，我无法处理您的请求。请稍后再试。',
+          sender: 'ai',
+          timestamp: new Date()
+        };
 
-      setMessages(prev => [...prev, aiResponse]);
+        setMessages(prev => [...prev, errorMessage]);
+      }
     } catch (error) {
-      console.error('Error generating AI response:', error);
+      console.error('发送消息失败:', error);
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: '抱歉，我现在遇到了一些技术问题。请稍后再试。',
+        text: handleChatError(error),
         sender: 'ai',
         timestamp: new Date()
       };
@@ -73,7 +119,7 @@ export const ChatContainer: React.FC = () => {
   return (
     <div className="flex flex-col h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* 聊天头部 */}
-      <ChatHeader />
+      <ChatHeader isConnected={isInitialized} isLoading={isLoading && !isInitialized} />
 
       {/* 消息列表 */}
       <div className="flex-1 overflow-y-auto px-6 py-4">
