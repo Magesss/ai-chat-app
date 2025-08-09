@@ -1,0 +1,40 @@
+{
+  "cursor.ai.enabled": true,
+  "cursor.ai.model": "claude-3.5-sonnet",
+  "cursor.ai.contextWindow": 8000,
+  "cursor.ai.temperature": 0.3,
+  "cursor.ai.includeRecentEdits": true,
+  "cursor.ai.includeGitDiff": true,
+  "cursor.ai.includeFileStructure": true,
+  
+  // 代码分析和建议
+  "cursor.ai.enableCodeActions": true,
+  "cursor.ai.enableInlineCompletion": true,
+  "cursor.ai.enableAutoDebug": true,
+  
+  // 项目特定设置
+  "cursor.ai.includeFiles": [
+    "src/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.css",
+    "*.md",
+    "package.json",
+    "tsconfig.json",
+    "tailwind.config.js"
+  ],
+  
+  "cursor.ai.excludeFiles": [
+    "node_modules/**",
+    "build/**",
+    "dist/**",
+    ".git/**"
+  ],
+  
+  // 智能提示配置
+  "cursor.ai.contextRules": {
+    "React": "使用函数式组件和 hooks，遵循 React 最佳实践",
+    "TypeScript": "使用严格的类型定义，避免 any 类型",
+    "CSS": "使用 Tailwind CSS 类名，保持响应式设计",
+    "Animation": "使用 Framer Motion 进行动画效果"
+  }
+}

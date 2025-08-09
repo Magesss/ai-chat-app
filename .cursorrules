@@ -1,0 +1,64 @@
+# Cursor AI 项目规则配置
+
+## 项目概述
+这是一个 React + TypeScript + Tailwind CSS 的 AI 聊天应用项目
+
+## 代码风格指南
+
+### React 组件
+- 使用函数式组件和 React Hooks
+- 优先使用 TypeScript 接口定义 props
+- 组件文件使用 PascalCase 命名
+- 导出组件使用 export const ComponentName
+
+### TypeScript
+- 使用严格的类型定义
+- 避免使用 any 类型
+- 为所有函数参数和返回值添加类型注释
+- 使用接口而不是类型别名定义对象结构
+
+### 样式和 UI
+- 使用 Tailwind CSS 类名进行样式设计
+- 保持响应式设计，支持移动端和桌面端
+- 使用 Framer Motion 添加动画效果
+- 遵循现代化的 UI/UX 设计原则
+
+### 动画
+- 使用 Framer Motion 的 motion 组件
+- 为交互元素添加悬浮和点击效果
+- 使用 initial, animate, exit 属性定义动画
+- 保持动画流畅，避免过度动画
+
+### 文件组织
+- 组件放在 src/components/ 目录
+- 类型定义放在 src/types/ 目录
+- 工具函数放在 src/utils/ 目录
+- 样式文件放在对应组件目录或 src/styles/
+
+### Git 提交
+- 使用语义化的提交信息
+- feat: 新功能
+- fix: 修复问题
+- style: 样式更新
+- refactor: 代码重构
+
+## AI 助手指导原则
+
+1. **代码生成**: 生成符合项目规范的高质量代码
+2. **错误修复**: 快速识别和修复 TypeScript 和 React 错误
+3. **性能优化**: 建议 React 性能优化方案
+4. **安全性**: 确保代码安全，避免 XSS 和其他漏洞
+5. **可维护性**: 编写易于理解和维护的代码
+
+## 技术栈
+- React 18
+- TypeScript
+- Tailwind CSS
+- Framer Motion
+- Lucide React (图标)
+
+## 浏览器支持
+- Chrome (最新版本)
+- Firefox (最新版本)
+- Safari (最新版本)
+- Edge (最新版本)
