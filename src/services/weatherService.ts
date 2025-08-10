@@ -20,7 +20,7 @@ class WeatherService {
   private constructor() {
     this.graphqlEndpoint = process.env.NODE_ENV === 'development' 
       ? 'http://localhost:4113/graphql' 
-      : 'http://localhost:4113/graphql'; // 暂时都使用本地服务器
+      : 'https://hello-mastra.maqingjie646.workers.dev/graphql';
   }
 
   public static getInstance(): WeatherService {
