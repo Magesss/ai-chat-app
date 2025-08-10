@@ -21,7 +21,7 @@ class WeatherService {
     // 使用新的RESTful API
     this.apiEndpoint = process.env.NODE_ENV === 'development' 
       ? 'http://localhost:4123/api' 
-      : 'https://gmagesss.site/api'; // 生产环境API地址
+      : 'https://hello-mastra.maqingjie646.workers.dev/api'; // 生产环境API地址
   }
 
   public static getInstance(): WeatherService {
