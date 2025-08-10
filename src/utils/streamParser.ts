@@ -92,7 +92,7 @@ export async function handleStreamResponse(
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value);
+      const chunk = decoder.decode(value instanceof Uint8Array ? value : new Uint8Array(value));
       const messages = parseStreamChunk(chunk);
 
       for (const message of messages) {
