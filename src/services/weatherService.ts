@@ -23,13 +23,13 @@ class WeatherService {
 
   public async askWeather(message: string): Promise<WeatherMessage> {
     try {
-      const response = await fetch(`${this.baseUrl}/agents/weather-agent/generate`, {
+      const response = await fetch(`${this.baseUrl}/agents/weatherAgent/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          input: message,
+          messages: [{ role: 'user', content: message }],
         }),
       });
 
@@ -39,7 +39,7 @@ class WeatherService {
 
       const data = await response.json();
       return {
-        content: data.content,
+        content: data.text,
         role: 'assistant',
         timestamp: new Date().toISOString()
       };
@@ -56,13 +56,13 @@ class WeatherService {
     onComplete: () => void
   ): Promise<void> {
     try {
-      const response = await fetch(`${this.baseUrl}/agents/weather-agent/stream`, {
+      const response = await fetch(`${this.baseUrl}/agents/weatherAgent/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          input: message,
+          messages: [{ role: 'user', content: message }],
         }),
       });
 
