@@ -1,3 +1,21 @@
+/**
+ * 聊天容器组件
+ * 
+ * 这是聊天应用的核心组件，负责管理整个聊天界面的状态和交互。
+ * 包括消息显示、用户输入处理、AI服务连接管理等功能。
+ * 
+ * 主要功能：
+ * - 初始化AI服务连接
+ * - 管理聊天消息列表
+ * - 处理用户消息发送
+ * - 显示AI回复
+ * - 错误处理和状态管理
+ * 
+ * @author AI Chat App
+ * @version 1.0
+ * @since 2025-08-09
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Message } from '../types';
@@ -7,17 +25,36 @@ import { ChatHeader } from './ChatHeader';
 import { LoadingIndicator } from './LoadingIndicator';
 import { chatService, convertToFrontendMessage, handleChatError } from '../services/chatService';
 
+/**
+ * 聊天容器组件
+ * 
+ * @returns React组件
+ */
 export const ChatContainer: React.FC = () => {
+  /** 聊天消息列表 */
   const [messages, setMessages] = useState<Message[]>([]);
+  
+  /** 是否正在加载AI回复 */
   const [isLoading, setIsLoading] = useState(false);
+  
+  /** AI服务是否已初始化连接 */
   const [isInitialized, setIsInitialized] = useState(false);
+  
+  /** 消息列表底部的引用，用于自动滚动 */
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * 滚动到消息列表底部
+   * 在新消息到达时自动滚动，确保用户始终看到最新消息
+   */
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // 初始化组件时测试连接并显示欢迎消息
+  /**
+   * 组件初始化副作用
+   * 在组件挂载时测试AI服务连接并显示欢迎消息
+   */
   useEffect(() => {
     const initializeChat = async () => {
       try {
@@ -58,17 +95,30 @@ export const ChatContainer: React.FC = () => {
     initializeChat();
   }, []);
 
+  /**
+   * 消息变化时的副作用
+   * 当消息列表更新时自动滚动到底部
+   */
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
+  /**
+   * 处理用户发送消息
+   * 
+   * 将用户输入的消息发送给AI服务，并处理回复。
+   * 包含完整的错误处理和状态管理。
+   * 
+   * @param text 用户输入的消息文本
+   */
   const handleSendMessage = async (text: string) => {
+    // 检查服务是否已初始化
     if (!isInitialized) {
       console.warn('聊天服务尚未初始化');
       return;
     }
 
-    // 添加用户消息
+    // 创建并添加用户消息到消息列表
     const userMessage: Message = {
       id: Date.now().toString(),
       text,
