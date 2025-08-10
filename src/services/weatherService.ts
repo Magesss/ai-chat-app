@@ -1,4 +1,4 @@
-import { API_CONFIG } from '../config/api';
+// import { API_CONFIG } from '../config/api'; // 暂时不使用
 
 export interface WeatherMessage {
   id: string;
