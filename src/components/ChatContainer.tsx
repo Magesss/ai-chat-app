@@ -23,8 +23,8 @@ import { MessageBubble } from './MessageBubble';
 import { ChatInput } from './ChatInput';
 import { ChatHeader } from './ChatHeader';
 import { LoadingIndicator } from './LoadingIndicator';
-import { chatService, convertToFrontendMessage, handleChatError } from '../services/chatService';
-import { handleStreamResponse } from '../utils/streamParser';
+import { weatherService } from '../services/weatherService';
+
 
 /**
  * 聊天容器组件
@@ -57,43 +57,17 @@ export const ChatContainer: React.FC = () => {
    * 在组件挂载时测试AI服务连接并显示欢迎消息
    */
   useEffect(() => {
-    const initializeChat = async () => {
-      try {
-        setIsLoading(true);
-        
-        // 测试连接
-        const helloMessage = await chatService.testConnection();
-        
-        // 显示初始欢迎消息
-        const welcomeMessage: Message = {
-          id: '1',
-          text: '您好！我是您的AI助手。我可以帮助您解答问题、提供建议或者进行愉快的对话。请问有什么我可以为您做的吗？',
-          sender: 'ai',
-          timestamp: new Date(),
-          isTyping: true
-        };
-
-        setMessages([welcomeMessage]);
-        setIsInitialized(true);
-        
-        console.log('AI 服务连接成功:', helloMessage);
-      } catch (error) {
-        console.error('初始化聊天失败:', error);
-        
-        const errorMessage: Message = {
-          id: '1',
-          text: '抱歉，AI 服务暂时无法连接。请检查网络连接或稍后再试。',
-          sender: 'ai',
-          timestamp: new Date()
-        };
-
-        setMessages([errorMessage]);
-      } finally {
-        setIsLoading(false);
-      }
+    // 显示初始欢迎消息
+    const welcomeMessage: Message = {
+      id: '1',
+      text: '您好！我是天气助手。我可以帮您查询任何地方的天气情况。请告诉我您想查询哪里的天气？',
+      sender: 'ai',
+      timestamp: new Date()
     };
 
-    initializeChat();
+    setMessages([welcomeMessage]);
+    setIsInitialized(true);
+    setIsLoading(false);
   }, []);
 
   /**
@@ -131,110 +105,24 @@ export const ChatContainer: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // 调用真实的 AI 服务
-      const response = await chatService.sendMessage(text);
+      // 调用天气服务
+      const response = await weatherService.askWeather(text);
+      
+      // 创建 AI 消息
+      const aiMessage: Message = {
+        id: Date.now().toString(),
+        text: response.content,
+        sender: 'ai',
+        timestamp: new Date()
+      };
 
-      if (response.success && response.stream) {
-        // 创建初始的 AI 消息
-        const aiMessage: Message = {
-          id: Date.now().toString(),
-          text: '',
-          sender: 'ai',
-          timestamp: new Date(),
-          isTyping: true
-        };
-
-        // 添加初始消息
-        setMessages(prev => [...prev, aiMessage]);
-
-        // 处理流式响应
-        const reader = response.stream.getReader();
-        const decoder = new TextDecoder();
-
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            let text: string;
-            if (!value) {
-              console.warn('Empty value received');
-              continue;
-            }
-            
-            if (typeof value === 'string') {
-              text = value;
-            } else {
-              try {
-                text = decoder.decode(value);
-              } catch (e) {
-                console.warn('Failed to decode value:', e);
-                continue;
-              }
-            }
-            try {
-              const data = JSON.parse(text);
-              switch (data.type) {
-                case 'start':
-                  console.log('开始接收响应');
-                  break;
-                case 'content':
-                  setMessages(prev => {
-                    const lastMessage = prev[prev.length - 1];
-                    if (lastMessage.sender === 'ai') {
-                      return [
-                        ...prev.slice(0, -1),
-                        {
-                          ...lastMessage,
-                          text: lastMessage.text + data.content
-                        }
-                      ];
-                    }
-                    return prev;
-                  });
-                  break;
-                case 'error':
-                  throw new Error(data.error);
-                case 'end':
-                  setMessages(prev => {
-                    const lastMessage = prev[prev.length - 1];
-                    if (lastMessage.sender === 'ai') {
-                      return [
-                        ...prev.slice(0, -1),
-                        {
-                          ...lastMessage,
-                          isTyping: false
-                        }
-                      ];
-                    }
-                    return prev;
-                  });
-                  break;
-              }
-            } catch (e) {
-              console.warn('解析消息失败:', e, text);
-            }
-          }
-        } finally {
-          reader.releaseLock();
-        }
-      } else {
-        // 处理 AI 服务返回的错误
-        const errorMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          text: response.error || '抱歉，我无法处理您的请求。请稍后再试。',
-          sender: 'ai',
-          timestamp: new Date()
-        };
-
-        setMessages(prev => [...prev, errorMessage]);
-      }
+      setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
       console.error('发送消息失败:', error);
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: handleChatError(error),
+        text: '抱歉，我暂时无法回答您的问题。请稍后再试。',
         sender: 'ai',
         timestamp: new Date()
       };

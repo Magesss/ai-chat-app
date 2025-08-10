@@ -23,6 +23,9 @@ export const API_CONFIG = {
   
   /** GraphQL Playground 交互式查询界面地址 */
   PLAYGROUND_URL: 'https://ai-server.maqingjie646.workers.dev/graphql',
+
+  /** Mastra 天气服务端点 */
+  MASTRA_ENDPOINT: 'https://hello-mastra.maqingjie646.workers.dev',
   
   /** 网络请求超时时间（毫秒）- 30秒 */
   TIMEOUT: 30000,
