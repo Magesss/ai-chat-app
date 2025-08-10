@@ -24,6 +24,7 @@ import { ChatInput } from './ChatInput';
 import { ChatHeader } from './ChatHeader';
 import { LoadingIndicator } from './LoadingIndicator';
 import { chatService, convertToFrontendMessage, handleChatError } from '../services/chatService';
+import { handleStreamResponse } from '../utils/streamParser';
 
 /**
  * 聊天容器组件
@@ -147,70 +148,44 @@ export const ChatContainer: React.FC = () => {
         setMessages(prev => [...prev, aiMessage]);
 
         // 处理流式响应
-        const reader = response.stream.getReader();
-        const decoder = new TextDecoder();
-
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const chunk = decoder.decode(value);
-            const messages = chunk.split('\n').filter(Boolean);
-
-            for (const message of messages) {
-              try {
-                const data = JSON.parse(message);
-                switch (data.type) {
-                  case 'start':
-                    console.log('开始接收响应');
-                    break;
-                  case 'content':
-                    // 更新 AI 消息内容
-                    setMessages(prev => {
-                      const lastMessage = prev[prev.length - 1];
-                      if (lastMessage.sender === 'ai') {
-                        return [
-                          ...prev.slice(0, -1),
-                          {
-                            ...lastMessage,
-                            text: lastMessage.text + data.content
-                          }
-                        ];
-                      }
-                      return prev;
-                    });
-                    break;
-                  case 'error':
-                    throw new Error(data.error);
-                  case 'end':
-                    // 移除打字动画
-                    setMessages(prev => {
-                      const lastMessage = prev[prev.length - 1];
-                      if (lastMessage.sender === 'ai') {
-                        return [
-                          ...prev.slice(0, -1),
-                          {
-                            ...lastMessage,
-                            isTyping: false
-                          }
-                        ];
-                      }
-                      return prev;
-                    });
-                    break;
-                }
-              } catch (e) {
-                console.warn('解析消息失败:', e);
+        await handleStreamResponse(response.stream, {
+          onStart: () => {
+            console.log('开始接收响应');
+          },
+          onContent: (content) => {
+            setMessages(prev => {
+              const lastMessage = prev[prev.length - 1];
+              if (lastMessage.sender === 'ai') {
+                return [
+                  ...prev.slice(0, -1),
+                  {
+                    ...lastMessage,
+                    text: lastMessage.text + content
+                  }
+                ];
               }
-            }
+              return prev;
+            });
+          },
+          onError: (error) => {
+            throw new Error(error);
+          },
+          onEnd: () => {
+            setMessages(prev => {
+              const lastMessage = prev[prev.length - 1];
+              if (lastMessage.sender === 'ai') {
+                return [
+                  ...prev.slice(0, -1),
+                  {
+                    ...lastMessage,
+                    isTyping: false
+                  }
+                ];
+              }
+              return prev;
+            });
           }
-        } catch (error) {
-          console.error('流式响应处理错误:', error);
-          throw error;
-        } finally {
-          reader.releaseLock();
-        }
+        });
       } else {
         // 处理 AI 服务返回的错误
         const errorMessage: Message = {
