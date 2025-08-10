@@ -76,7 +76,7 @@ function isValidStreamMessage(data: any): data is StreamMessage {
  * @param handlers 消息处理器
  */
 export async function handleStreamResponse(
-  stream: ReadableStream<string>,
+  stream: ReadableStream<Uint8Array | string>,
   handlers: {
     onStart?: () => void;
     onContent: (content: string) => void;
@@ -92,7 +92,23 @@ export async function handleStreamResponse(
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value instanceof Uint8Array ? value : new Uint8Array(value));
+      // 确保 value 是 Uint8Array 类型
+      let uint8Value: Uint8Array;
+      if (!value) {
+        console.warn('Empty value received');
+        continue;
+      }
+
+      if (typeof value === 'string') {
+        uint8Value = new TextEncoder().encode(value);
+      } else if (value instanceof Uint8Array) {
+        uint8Value = value;
+      } else {
+        console.warn('Unexpected value type:', typeof value);
+        continue;
+      }
+
+      const chunk = decoder.decode(uint8Value);
       const messages = parseStreamChunk(chunk);
 
       for (const message of messages) {
