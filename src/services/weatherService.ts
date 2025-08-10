@@ -18,10 +18,10 @@ class WeatherService {
   private graphqlEndpoint: string;
 
   private constructor() {
-    // 临时使用本地服务器作为后备，直到Cloudflare Workers GraphQL路由修复
+    // 现在后端支持/graphql路径了
     this.graphqlEndpoint = process.env.NODE_ENV === 'development' 
       ? 'http://localhost:4113/graphql' 
-      : 'http://localhost:4113/graphql'; // 临时回退到本地服务器
+      : 'https://hello-mastra.maqingjie646.workers.dev/graphql';
   }
 
   public static getInstance(): WeatherService {
