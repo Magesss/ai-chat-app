@@ -221,7 +221,8 @@ class ChatService {
       await this.createChatSession();
     }
 
-    const query = `mutation SendMessage($message: String!, $sessionId: ID) {
+    const query = `
+      mutation SendMessage($message: String!, $sessionId: ID) {
         sendMessage(message: $message, sessionId: $sessionId) {
           success
           error
@@ -244,7 +245,8 @@ class ChatService {
             updatedAt
           }
         }
-      }`;
+      }
+    `;
 
     const variables = {
       message,
