@@ -57,8 +57,10 @@ export interface ChatSession {
 export interface ChatResponse {
   /** 操作是否成功 */
   success: boolean;
-  /** AI 回复的消息（如果成功） */
-  message: ChatMessage | null;
+  /** AI 回复的消息（如果成功且不是流式响应） */
+  message?: ChatMessage | null;
+  /** 流式响应（如果是流式响应） */
+  stream?: ReadableStream<string>;
   /** 更新后的会话信息（如果成功） */
   session: ChatSession | null;
   /** 错误信息（如果失败） */
@@ -219,11 +221,11 @@ class ChatService {
       await this.createChatSession();
     }
 
-    const query = `
-      mutation SendMessage($message: String!, $sessionId: ID) {
+    const query = `mutation SendMessage($message: String!, $sessionId: ID) {
         sendMessage(message: $message, sessionId: $sessionId) {
           success
           error
+          stream
           message {
             id
             role
@@ -242,8 +244,7 @@ class ChatService {
             updatedAt
           }
         }
-      }
-    `;
+      }`;
 
     const variables = {
       message,

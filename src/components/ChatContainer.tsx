@@ -133,12 +133,84 @@ export const ChatContainer: React.FC = () => {
       // 调用真实的 AI 服务
       const response = await chatService.sendMessage(text);
 
-      if (response.success && response.message) {
-        // 转换并添加 AI 回复
-        const aiMessage = convertToFrontendMessage(response.message);
-        aiMessage.isTyping = true; // 添加打字动画效果
-        
+      if (response.success && response.stream) {
+        // 创建初始的 AI 消息
+        const aiMessage: Message = {
+          id: Date.now().toString(),
+          text: '',
+          sender: 'ai',
+          timestamp: new Date(),
+          isTyping: true
+        };
+
+        // 添加初始消息
         setMessages(prev => [...prev, aiMessage]);
+
+        // 处理流式响应
+        const reader = response.stream.getReader();
+        const decoder = new TextDecoder();
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value);
+            const messages = chunk.split('\n').filter(Boolean);
+
+            for (const message of messages) {
+              try {
+                const data = JSON.parse(message);
+                switch (data.type) {
+                  case 'start':
+                    console.log('开始接收响应');
+                    break;
+                  case 'content':
+                    // 更新 AI 消息内容
+                    setMessages(prev => {
+                      const lastMessage = prev[prev.length - 1];
+                      if (lastMessage.sender === 'ai') {
+                        return [
+                          ...prev.slice(0, -1),
+                          {
+                            ...lastMessage,
+                            text: lastMessage.text + data.content
+                          }
+                        ];
+                      }
+                      return prev;
+                    });
+                    break;
+                  case 'error':
+                    throw new Error(data.error);
+                  case 'end':
+                    // 移除打字动画
+                    setMessages(prev => {
+                      const lastMessage = prev[prev.length - 1];
+                      if (lastMessage.sender === 'ai') {
+                        return [
+                          ...prev.slice(0, -1),
+                          {
+                            ...lastMessage,
+                            isTyping: false
+                          }
+                        ];
+                      }
+                      return prev;
+                    });
+                    break;
+                }
+              } catch (e) {
+                console.warn('解析消息失败:', e);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('流式响应处理错误:', error);
+          throw error;
+        } finally {
+          reader.releaseLock();
+        }
       } else {
         // 处理 AI 服务返回的错误
         const errorMessage: Message = {
