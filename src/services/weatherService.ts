@@ -1,17 +1,26 @@
 import { API_CONFIG } from '../config/api';
 
 export interface WeatherMessage {
+  id: string;
   content: string;
   role: 'user' | 'assistant';
-  timestamp?: string;
+  timestamp: string;
+}
+
+export interface WeatherResponse {
+  success: boolean;
+  message: WeatherMessage | null;
+  error: string | null;
 }
 
 class WeatherService {
   private static instance: WeatherService;
-  private baseUrl: string;
+  private graphqlEndpoint: string;
 
   private constructor() {
-    this.baseUrl = API_CONFIG.MASTRA_ENDPOINT;
+    this.graphqlEndpoint = process.env.NODE_ENV === 'development' 
+      ? 'http://localhost:4113/graphql' 
+      : 'https://hello-mastra.maqingjie646.workers.dev/graphql';
   }
 
   public static getInstance(): WeatherService {
@@ -23,13 +32,29 @@ class WeatherService {
 
   public async askWeather(message: string): Promise<WeatherMessage> {
     try {
-      const response = await fetch(`${this.baseUrl}/agents/weatherAgent/generate`, {
+      const query = `
+        mutation GetWeather($input: String!) {
+          getWeather(input: $input) {
+            success
+            message {
+              id
+              role
+              content
+              timestamp
+            }
+            error
+          }
+        }
+      `;
+
+      const response = await fetch(this.graphqlEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          messages: [{ role: 'user', content: message }],
+          query,
+          variables: { input: message }
         }),
       });
 
@@ -38,58 +63,25 @@ class WeatherService {
       }
 
       const data = await response.json();
-      return {
-        content: data.text,
-        role: 'assistant',
-        timestamp: new Date().toISOString()
-      };
+
+      if (data.errors) {
+        throw new Error(data.errors[0].message);
+      }
+
+      const result = data.data.getWeather;
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Unknown error occurred');
+      }
+
+      return result.message;
     } catch (error) {
       console.error('Error fetching weather:', error);
       throw error;
     }
   }
 
-  public async streamWeather(
-    message: string,
-    onChunk: (chunk: string) => void,
-    onError: (error: Error) => void,
-    onComplete: () => void
-  ): Promise<void> {
-    try {
-      const response = await fetch(`${this.baseUrl}/agents/weatherAgent/stream`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          messages: [{ role: 'user', content: message }],
-        }),
-      });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error('Response body is null');
-      }
-
-      const decoder = new TextDecoder();
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          onComplete();
-          break;
-        }
-        const chunk = decoder.decode(value);
-        onChunk(chunk);
-      }
-    } catch (error) {
-      console.error('Error streaming weather:', error);
-      onError(error as Error);
-    }
-  }
 }
 
 export const weatherService = WeatherService.getInstance();
