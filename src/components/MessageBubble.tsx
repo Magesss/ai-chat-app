@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Message } from '../types';
 import { Bot, User } from 'lucide-react';
 
@@ -72,9 +74,37 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, index }) 
         }`}
       >
         {/* 消息内容 */}
-        <div className="text-sm leading-relaxed">
+        <div className="text-sm leading-relaxed prose prose-sm max-w-none">
           {isAI && message.isTyping ? (
             <TypewriterText text={message.text} />
+          ) : isAI ? (
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              components={{
+                // 自定义样式以适应气泡
+                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                ul: ({ children }) => <ul className="mb-2 ml-4 list-disc">{children}</ul>,
+                ol: ({ children }) => <ol className="mb-2 ml-4 list-decimal">{children}</ol>,
+                li: ({ children }) => <li className="mb-1">{children}</li>,
+                strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                em: ({ children }) => <em className="italic">{children}</em>,
+                code: ({ children }) => (
+                  <code className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-xs font-mono">
+                    {children}
+                  </code>
+                ),
+                pre: ({ children }) => (
+                  <pre className="bg-gray-100 text-gray-800 p-2 rounded text-xs font-mono overflow-x-auto">
+                    {children}
+                  </pre>
+                ),
+                h1: ({ children }) => <h1 className="text-lg font-bold mb-2">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-base font-semibold mb-2">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-sm font-semibold mb-1">{children}</h3>,
+              }}
+            >
+              {message.text}
+            </ReactMarkdown>
           ) : (
             message.text
           )}
