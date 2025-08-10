@@ -1,12 +1,40 @@
+/**
+ * 欢迎屏幕组件
+ * 
+ * 应用的入口页面，展示应用特性和引导用户开始聊天。
+ * 使用 React Router 进行导航，提供更好的路由管理。
+ * 
+ * @author AI Chat App
+ * @version 1.0
+ * @since 2025-08-09
+ */
+
 import React from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { Sparkles, MessageCircle, Zap, Heart } from 'lucide-react';
+import { ROUTES } from '../router/routes';
 
-interface WelcomeScreenProps {
-  onStartChat: () => void;
-}
+/**
+ * 欢迎屏幕组件
+ * 
+ * 展示应用介绍和特性，引导用户进入聊天界面
+ * 
+ * @returns React组件
+ */
+export const WelcomeScreen: React.FC = () => {
+  /** 路由导航钩子 */
+  const navigate = useNavigate();
 
-export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStartChat }) => {
+  /**
+   * 处理开始聊天按钮点击事件
+   * 导航到聊天页面
+   */
+  const handleStartChat = () => {
+    navigate(ROUTES.CHAT);
+  };
+
+  /** 应用特性列表 */
   const features = [
     {
       icon: MessageCircle,
@@ -92,7 +120,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStartChat }) => 
           transition={{ duration: 0.8, delay: 0.8 }}
         >
           <motion.button
-            onClick={onStartChat}
+            onClick={handleStartChat}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-full shadow-2xl hover:shadow-3xl transition-all text-lg"
